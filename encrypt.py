@@ -4,21 +4,59 @@ import random
 import string
 import argparse
 import subprocess
-import tkinter as tk
-from tkinter import filedialog
+import os
+import platform
+#import tkinter as tk
+#from tkinter import filedialog
+
+def copy_to_clipboard(password):
+    # Detect the operating system
+    current_os = platform.system()
+    
+    try:
+        if current_os == "Darwin":  # macOS
+            process = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+            process.communicate(input=password.encode('utf-8'))
+            print('Password copied to clipboard.')
+        elif current_os == "Linux":
+            # Check if wl-copy is available for Wayland
+            if os.environ.get('WAYLAND_DISPLAY'):
+                process = subprocess.Popen(['wl-copy'], stdin=subprocess.PIPE)
+                process.communicate(input=password.encode('utf-8'))
+                print('Password copied to clipboard using wl-copy (Wayland).')
+            else:
+                # Fallback to xclip for X11
+                process = subprocess.Popen(['xclip', '-selection', 'clipboard'], stdin=subprocess.PIPE)
+                process.communicate(input=password.encode('utf-8'))
+                print('Password copied to clipboard using xclip (X11).')
+        elif current_os == "Windows":
+            process = subprocess.Popen(['clip'], stdin=subprocess.PIPE)
+            process.communicate(input=password.encode('utf-8'))
+            print('Password copied to clipboard.')
+        else:
+            print(f"Clipboard copy not supported on {current_os}.")
+    except FileNotFoundError:
+        print(f"Clipboard utility not found on {current_os}. Please install the required tool (e.g., xclip for Linux).")
 
 def select_files():
-    # Hide main root window
-    root = tk.Tk()
-    root.withdraw()  # This withdraws the root window so it doesn't appear
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
 
-    # Open file dialog allowing multiple file selections
-    file_paths = filedialog.askopenfilenames(
-        title="Select files",
-        filetypes=(("All files", "*.*"),)
-    )
-    return file_paths
+        # Hide main root window
+        root = tk.Tk()
+        root.withdraw()  # This withdraws the root window so it doesn't appear
 
+        # Open file dialog allowing multiple file selections
+        file_paths = filedialog.askopenfilenames(
+            title="Select files",
+            filetypes=(("All files", "*.*"),)
+        )
+        return file_paths
+    except ImportError:
+        print("tkinter is not available on this system. Please install it to use the file selection feature.")
+        return []
+    
 def generate_password(length=12):
     characters = string.ascii_letters + string.digits + string.punctuation
     password = ''.join(random.choice(characters) for _ in range(length))
@@ -37,7 +75,12 @@ def main():
 
     args = parser.parse_args()
     if(not args.file):
-        files_to_encrypt = ' '.join(select_files())
+        selected_files = select_files()
+        if not selected_files:
+            parser.print_help()
+            print("No files selected. Exiting.")
+            return
+        files_to_encrypt = ' '.join(selected_files)
     else:
         files_to_encrypt = args.file
 
@@ -47,11 +90,10 @@ def main():
         # Encrypt the file using the generated password
         encrypt_file_with_zip(files_to_encrypt, password)
 
-        print(f'File "{args.file}" encrypted and saved as "{args.file}.zip" with password {password}.')
-        # Use subprocess to run pbcopy and pipe the password
-        process = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
-        process.communicate(input=password.encode('utf-8'))
-        print('Password copied to clipboard.')
+        print(f'File "{files_to_encrypt}" encrypted and saved as "{files_to_encrypt}.zip" with password {password}.')
+
+        # Copy to clipboard
+        copy_to_clipboard(password)
 
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while encrypting the file: {e}')
