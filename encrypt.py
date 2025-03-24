@@ -75,13 +75,13 @@ def generate_password(length=12):
     password = ''.join(random.choice(characters) for _ in range(length))
     return password
 
-def encrypt_file_with_zip(input_file, password):
+def encrypt_file_with_zip(input_file, password, archive_name):
     """
     Encrypt a file using the zip command with a password.
     """
     print(input_file)
     # Use the subprocess module to call the zip command
-    zip_command = ['zip', '-e', '-P', password, f'{input_file}.zip', input_file]
+    zip_command = ['zip', '-e', '-P', password, f'{archive_name}.zip', input_file]
     subprocess.run(zip_command, check=True)
 
 def main():
@@ -96,15 +96,26 @@ def main():
             parser.print_help()
             print("No files selected. Exiting.")
             return
-        files_to_encrypt = ' '.join(selected_files)
+        files_to_encrypt = ''
+        for file in selected_files:
+            file_dir, file_name = os.path.split(file)
+            files_to_encrypt += file_name
     else:
-        files_to_encrypt = args.file
+        file_dir, file_name = os.path.split(args.file)
+        if(file_dir == ''):
+            file_dir = os.getcwd()
+        files_to_encrypt = file_name
 
-    password = generate_password(args.length)
+    # Save the original working directory
+    original_dir = os.getcwd()
 
     try:
+         # Change to the directory containing the file
+        os.chdir(file_dir)
+        password = generate_password(args.length)
+
         # Encrypt the file using the generated password
-        encrypt_file_with_zip(files_to_encrypt, password)
+        encrypt_file_with_zip(files_to_encrypt, password, file_name)
 
         print(f'File "{files_to_encrypt}" encrypted and saved as "{files_to_encrypt}.zip" with password {password}.')
 
@@ -113,6 +124,10 @@ def main():
 
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while encrypting the file: {e}')
+
+    finally:
+        # Change back to the original working directory
+        os.chdir(original_dir)
 
 if __name__ == "__main__":
     main()

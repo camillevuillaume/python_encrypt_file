@@ -14,6 +14,7 @@ Replace <file_to_encrypt> with the path to the file you want to encrypt and <pas
 
 If no input file is given and tk is installed, a file selecter allows you to pick a file.
 Then, a zip file is generated with a random password. The password is showed in the terminal and automatically copied to the clipboard.
+NB: multiple file selection is currently not supported.
 
 You can omit python3 if the file has the right permissions.
 
