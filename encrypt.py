@@ -6,10 +6,17 @@ import argparse
 import subprocess
 import os
 import platform
-#import tkinter as tk
-#from tkinter import filedialog
 
 def copy_to_clipboard(password):
+    """
+    Copies the given password to the clipboard.
+
+    Supports macOS, Linux (Wayland and X11), and Windows. 
+    Prints a message if the clipboard utility is not found.
+
+    Args:
+        password (str): The password to copy to the clipboard.
+    """    
     # Detect the operating system
     current_os = platform.system()
     
@@ -39,6 +46,9 @@ def copy_to_clipboard(password):
         print(f"Clipboard utility not found on {current_os}. Please install the required tool (e.g., xclip for Linux).")
 
 def select_files():
+    """
+    Open a file dialog to select files.
+    """
     try:
         import tkinter as tk
         from tkinter import filedialog
@@ -58,11 +68,17 @@ def select_files():
         return []
     
 def generate_password(length=12):
+    """
+    Generate a random password with the specified length.
+    """
     characters = string.ascii_letters + string.digits + string.punctuation
     password = ''.join(random.choice(characters) for _ in range(length))
     return password
 
 def encrypt_file_with_zip(input_file, password):
+    """
+    Encrypt a file using the zip command with a password.
+    """
     print(input_file)
     # Use the subprocess module to call the zip command
     zip_command = ['zip', '-e', '-P', password, f'{input_file}.zip', input_file]
