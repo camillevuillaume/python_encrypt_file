@@ -96,14 +96,16 @@ def main():
             parser.print_help()
             print("No files selected. Exiting.")
             return
-        files_to_encrypt = ''
+        file_list = []
         for file in selected_files:
             file_dir, file_name = os.path.split(file)
-            files_to_encrypt += file_name
+            file_list.append(file_name)
+        files_to_encrypt = ' '.join(file_list)
     else:
         file_dir, file_name = os.path.split(args.file)
         if(file_dir == ''):
             file_dir = os.getcwd()
+        file_list  = [file_name]
         files_to_encrypt = file_name
 
     # Save the original working directory
@@ -115,9 +117,10 @@ def main():
         password = generate_password(args.length)
 
         # Encrypt the file using the generated password
-        encrypt_file_with_zip(files_to_encrypt, password, file_name)
+        for file in file_list:
+            encrypt_file_with_zip(file, password, file_name)
 
-        print(f'File "{files_to_encrypt}" encrypted and saved as "{files_to_encrypt}.zip" with password {password}.')
+        print(f'File(s) "{files_to_encrypt}" encrypted and saved as "{file_name}.zip" with password {password}.')
 
         # Copy to clipboard
         copy_to_clipboard(password)
